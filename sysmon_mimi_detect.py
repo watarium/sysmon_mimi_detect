@@ -9,10 +9,14 @@ jsonstring = {
     "size":10000,
     "query": {
         "terms": {
-            "event_data.ImageLoaded": ["crypt32","imm32","rpcrt4"]
+            "event_data.ImageLoaded.keyword": [
+                "C:\\Windows\\System32\\imm32.dll",
+                "C:\\Windows\\System32\\crypt32.dll"
+            ]
         }
     }
 }
+
 
 def sendrest(url):
     if len(sys.argv) != 2:
@@ -48,7 +52,7 @@ def pivot(eventlist):
             print(eventdf[eventdf.ProcessID == pid])
             print("")
     #imagept.to_csv("imagept.csv")
-    #print(eventdf)
+    #print(imagept)
 
 
 if __name__ == "__main__":
