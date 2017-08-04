@@ -10,8 +10,26 @@ jsonstring = {
     "query": {
         "terms": {
             "event_data.ImageLoaded.keyword": [
+                "C:\\Windows\\System32\\samlib.dll",
+                "C:\\Windows\\System32\\crypt32.dll",
+                "C:\\Windows\\System32\\sspicli.dll",
+                "C:\\Windows\\System32\\user32.dll",
                 "C:\\Windows\\System32\\imm32.dll",
-                "C:\\Windows\\System32\\crypt32.dll"
+                "C:\\Windows\\System32\\msasn1.dll",
+                "C:\\Windows\\System32\\msvcrt.dll",
+                "C:\\Windows\\System32\\cryptdll.dll",
+                "C:\\Windows\\System32\\vaultcli.dll",
+                "C:\\Windows\\System32\\gdi32.dll",
+                "C:\\Windows\\System32\\sechost.dll",
+                "C:\\Windows\\System32\\rpcrt4.dll",
+                "C:\\Windows\\System32\\shell32.dll",
+                "C:\\Windows\\System32\\kernel32.dll",
+                "C:\\Windows\\System32\\rsaenh.dll",
+                "C:\\Windows\\System32\\advapi32.dll",
+                "C:\\Windows\\System32\\secur32.dll",
+                "C:\\Windows\\System32\\KernelBase.dll",
+                "C:\\Windows\\System32\\ntdll.dll",
+                "C:\\Windows\\System32\\shlwapi.dll"
             ]
         }
     }
@@ -43,10 +61,13 @@ def parser(response):
 def pivot(eventlist):
     eventdf = pd.DataFrame(eventlist)
     eventdf.columns = ["ProcessID","Time","Client","Image","ImageLoaded"]
-    imagept = eventdf.pivot_table(index="ImageLoaded",columns="ProcessID",values="Time",aggfunc=lambda x: len(x),fill_value = 0,margins=True)
+    imagept = eventdf.pivot_table(index="ImageLoaded",columns="ProcessID",values="Time",aggfunc=lambda x: len(x),fill_value = 0)
 
     for pid in imagept.columns:
-        if imagept.ix["All",pid] == len(imagept.index)-1:
+        multic = 1
+        for rowc in imagept.index:
+            multic = multic * imagept.ix[rowc, pid]
+        if multic != 0:
             print("mimikatz activity detected!")
             print(pid)
             print(eventdf[eventdf.ProcessID == pid])
