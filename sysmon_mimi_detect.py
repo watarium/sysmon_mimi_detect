@@ -1,9 +1,20 @@
+# You can check mimikatz activity using sysmon event logs
+# This tool display ...
+# ProcessID
+# Time
+# AccountName
+# Image (Parent process)
+# ImageLoaded (Loaded Process by parent process)
+#
+#  This tool was tested on python 3
+# Usage: python sysmon_mimi_detect your_ElasticserchServer_Address your_ElasticsearchServer_Port
+
 import requests
 import sys
 import json
 import pandas as pd
-import pprint
 
+# DLL List
 jsonstring = {
     "from": 0,
     "size":10000,
@@ -35,17 +46,17 @@ jsonstring = {
     }
 }
 
-
+# Connect Elasticsearch Sever and send query
 def sendrest(url):
     if len(sys.argv) != 2:
         sys.exit("Usage: %s eslasticsearch_address:Port" %sys.argv[0])
 
+    # Please specify your Elasticsearch search path
     path = 'http://' + url[0] + '/winlogbeat-*/_search?pretty=true'
     response = requests.get(path, data = json.dumps(jsonstring))
-    #print(json.dumps(jsonstring))
-    #pprint.pprint(response.json())
     parser(response)
 
+# Parse and extract data
 def parser(response):
     hitn = response.json()["hits"]["total"]
     eventlist = []
@@ -58,20 +69,23 @@ def parser(response):
         #print(eventdata)
     pivot(eventlist)
 
+# Create pivot table
 def pivot(eventlist):
     eventdf = pd.DataFrame(eventlist)
-    eventdf.columns = ["ProcessID","Time","Client","Image","ImageLoaded"]
+    eventdf.columns = ["ProcessID","Time","Account","Image","ImageLoaded"]
     imagept = eventdf.pivot_table(index="ImageLoaded",columns="ProcessID",values="Time",aggfunc=lambda x: len(x),fill_value = 0)
 
     for pid in imagept.columns:
         multic = 1
         for rowc in imagept.index:
+            # ignore dll loaded count 0 (n * 0 = 0)
             multic = multic * imagept.ix[rowc, pid]
         if multic != 0:
             print("mimikatz activity detected!")
             print(pid)
             print(eventdf[eventdf.ProcessID == pid])
             print("")
+    # Please remove comment out if you want to see pivot table
     #imagept.to_csv("imagept.csv")
     #print(imagept)
 
