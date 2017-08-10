@@ -46,6 +46,8 @@ jsonstring = {
     }
 }
 
+minlistnum = len(jsonstring["query"]["terms"]["event_data.ImageLoaded.keyword"])
+
 # Connect Elasticsearch Sever and send query
 def sendrest(url):
     if len(sys.argv) != 2:
@@ -67,6 +69,10 @@ def parser(response):
         taptolist = list(eventdata)
         eventlist.append(taptolist)
         #print(eventdata)
+        # Elasticsearch can't read more than 10,000 results.
+        if i == 9999:
+            print("Elasticsearch can't read more than 10,000 results.")
+            sys.exit()
     pivot(eventlist)
 
 # Create pivot table
@@ -74,6 +80,10 @@ def pivot(eventlist):
     eventdf = pd.DataFrame(eventlist)
     eventdf.columns = ["ProcessID","Time","Account","Image","ImageLoaded"]
     imagept = eventdf.pivot_table(index="ImageLoaded",columns="ProcessID",values="Time",aggfunc=lambda x: len(x),fill_value = 0)
+    global minlistnum
+    if minlistnum != len(imagept):
+        print("mimikatz activity is not detected.")
+        sys.exit()
 
     for pid in imagept.columns:
         multic = 1
@@ -87,8 +97,7 @@ def pivot(eventlist):
             print("")
     # Please remove comment out if you want to see pivot table
     #imagept.to_csv("imagept.csv")
-    #print(imagept)
-
+    print(imagept)
 
 if __name__ == "__main__":
     sendrest(sys.argv[1:])
